@@ -7,7 +7,37 @@ import Card from './ui/Card';
 // src/components/Filters.jsx
 export default function Filters() {
 
-  const [searchTerm, setSearchTerm] = useState('some other value')
+  const [searchTerm, setSearchTerm] = useState('')
+  // because we're selecting multiple things at once, it makes sense to use an array
+  const [selectedCategories, setSelectedCategories] = useState([])
+
+  function toggleCategory(category) {
+    // when I get a category, that means it's been clicked.
+    // 1.   look in my stateful array to see if that category label is already there.
+    // 2.a) -> it's not -> I want to add it to the stateful array of selected categories
+    // 2.b) -> it is    -> I want to remove it from that array
+
+    // caveat: state variables are *immutable*, so I can't just push and remove from an array;
+    //         I have to reconstruct the array entirely and then pass that array into the setter.
+    // outcome: -> I'll just use [].filter() to reconstruct it entirely
+    //          -> Since this isn't terribly complex, let's just do it all as a one-off inside the setter input.
+    setSelectedCategories(
+      (prev) => {
+        // 2.b) the category label is in the stateful array (i.e. selected)
+        //      -> reconstruct the entire array with that term filtered out
+        if (prev.includes(category)) {
+          return prev.filter(
+            (c) => c !== category
+          );
+        }
+
+        // 2.a) the category label is *not* already in the stateful array (i.e. not selected)
+        //      -> we're using the ...spread operator, which unpacks an array into a flat series of terms,
+        //         so that we get e.g. [1, 2, 3, category] instead of [prev, category] which would give us [[1, 2, 3], category]
+        return [...prev, category]
+      }
+    )
+  }
 
   return (
     <Card title="Filters">
@@ -36,8 +66,16 @@ export default function Filters() {
                 <button
                   key={label}
                   type="button"
-                  className="rounded border border-sky-600 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50"
+                  className={`${selectedCategories.includes(label) && 'bg-sky-600 text-white'} rounded border border-sky-600 px-3 py-1 text-xs font-semibold text-sky-700 hover:bg-sky-50`}
+                  onClick={() => toggleCategory(label)}
                 >
+                  {/* Above, we're using the && (and) operator to conditionally render activet state on the buttons!
+                      -> somethingResolvesTruthy && thenAlsoDothis
+                      -> we can leverage this to dynamically add styles based on e.g. the click state of the button, as tracked in the array
+
+                      This is shorthand that's useful if there's no 'else' case to render. Here, we don't need to do anything
+                      if the button is inactive. *If* we had a case where we wanted to render either A or B, we'd use a ternary.
+                  */}
                   {label}
                 </button>
               ))}
